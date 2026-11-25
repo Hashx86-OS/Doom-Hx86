@@ -82,6 +82,48 @@ static void sink_double(FormatSink* sink, double value) {
     }
 }
 
+/* Emit an unsigned value with width/precision padding. */
+static void sink_number(FormatSink* sink, int negative, unsigned int magnitude, unsigned int base,
+                        const char* digits, int width, int zeroPad, int leftAlign,
+                        int precision) {
+    char tmp[32];
+    int n = 0;
+
+    // '0' padding is ignored when an explicit precision is given.
+    if (precision >= 0) zeroPad = 0;
+
+    if (magnitude == 0) {
+        if (precision != 0) tmp[n++] = '0';
+    } else {
+        while (magnitude != 0) {
+            tmp[n++] = digits[magnitude % base];
+            magnitude /= base;
+        }
+    }
+    while (precision > n) tmp[n++] = '0';
+
+    int sign = negative ? 1 : 0;
+    int pad = width > n + sign ? width - (n + sign) : 0;
+
+    if (!leftAlign) {
+        if (zeroPad) {
+            if (sign) sink_put(sink, '-');
+            sign = 0;
+            for (int k = 0; k < pad; k++) sink_put(sink, '0');
+            pad = 0;
+        } else {
+            for (int k = 0; k < pad; k++) sink_put(sink, ' ');
+            pad = 0;
+        }
+    }
+
+    if (sign) sink_put(sink, '-');
+    for (int k = n - 1; k >= 0; k--) sink_put(sink, tmp[k]);
+    if (leftAlign) {
+        for (int k = 0; k < pad; k++) sink_put(sink, ' ');
+    }
+}
+
 static int format_v(char* buffer, size_t capacity, const char* format, va_list args) {
     FormatSink sink = {buffer, capacity, 0};
     if (capacity != 0) buffer[0] = '\0';
@@ -96,14 +138,32 @@ static int format_v(char* buffer, size_t capacity, const char* format, va_list a
             sink_put(&sink, '%');
             continue;
         }
+
+        int leftAlign = 0;
+        int zeroPad = 0;
         while (format[i] == '-' || format[i] == '+' || format[i] == ' ' ||
-               format[i] == '#' || format[i] == '0')
+               format[i] == '#' || format[i] == '0') {
+            if (format[i] == '-') leftAlign = 1;
+            if (format[i] == '0') zeroPad = 1;
             i++;
-        while (format[i] >= '0' && format[i] <= '9') i++;
+        }
+
+        int width = 0;
+        while (format[i] >= '0' && format[i] <= '9') {
+            width = width * 10 + (format[i] - '0');
+            i++;
+        }
+
+        int precision = -1;
         if (format[i] == '.') {
             i++;
-            while (format[i] >= '0' && format[i] <= '9') i++;
+            precision = 0;
+            while (format[i] >= '0' && format[i] <= '9') {
+                precision = precision * 10 + (format[i] - '0');
+                i++;
+            }
         }
+
         int isLong = 0;
         while (format[i] == 'l' || format[i] == 'h' || format[i] == 'L') {
             if (format[i] == 'l') isLong = 1;
@@ -111,21 +171,44 @@ static int format_v(char* buffer, size_t capacity, const char* format, va_list a
         }
         switch (format[i]) {
             case 'd':
-            case 'i':
-                sink_signed(&sink, va_arg(args, int));
+            case 'i': {
+                int value = va_arg(args, int);
+                int negative = value < 0;
+                unsigned int magnitude =
+                    negative ? (unsigned int)(-(long long)value) : (unsigned int)value;
+                sink_number(&sink, negative, magnitude, 10, "0123456789", width, zeroPad,
+                            leftAlign, precision);
                 break;
+            }
             case 'u':
-                sink_unsigned(&sink, va_arg(args, unsigned int), 10, "0123456789");
+                sink_number(&sink, 0, va_arg(args, unsigned int), 10, "0123456789", width, zeroPad,
+                            leftAlign, precision);
                 break;
             case 'x':
-                sink_unsigned(&sink, va_arg(args, unsigned int), 16, "0123456789abcdef");
+                sink_number(&sink, 0, va_arg(args, unsigned int), 16, "0123456789abcdef", width,
+                            zeroPad, leftAlign, precision);
                 break;
             case 'X':
-                sink_unsigned(&sink, va_arg(args, unsigned int), 16, "0123456789ABCDEF");
+                sink_number(&sink, 0, va_arg(args, unsigned int), 16, "0123456789ABCDEF", width,
+                            zeroPad, leftAlign, precision);
                 break;
-            case 's':
-                sink_text(&sink, va_arg(args, const char*));
+            case 's': {
+                const char* text = va_arg(args, const char*);
+                // strlen() is defined later in this file; count inline.
+                int len = 0;
+                if (text) {
+                    while (text[len] != '\0') len++;
+                }
+                if (precision >= 0 && len > precision) len = precision;
+                if (!leftAlign) {
+                    for (int k = len; k < width; k++) sink_put(&sink, ' ');
+                }
+                for (int k = 0; k < len; k++) sink_put(&sink, text[k]);
+                if (leftAlign) {
+                    for (int k = len; k < width; k++) sink_put(&sink, ' ');
+                }
                 break;
+            }
             case 'c':
                 sink_put(&sink, (char)va_arg(args, int));
                 break;
@@ -592,6 +675,15 @@ int lseek(int fd, int offset, int whence) {
 }
 
 int unlink(const char* pathname) { return syscall_unlink(pathname); }
+
+/* The kernel resolves absolute paths reliably; relative names like
+ * "./doom1.wad" do not reach the FAT directory. Doom uses getcwd() to build
+ * absolute IWAD and config paths. */
+char* getcwd(char* buf, size_t size) {
+    if (buf == nullptr || size == 0) return nullptr;
+    if (syscall_getcwd(buf, (uint32_t)size) <= 0) return nullptr;
+    return buf;
+}
 
 int access(const char* pathname, int mode) {
     (void)mode;

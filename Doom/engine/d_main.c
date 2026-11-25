@@ -574,9 +574,17 @@ void IdentifyVersion (void)
 
 #ifdef NORMALUNIX
     char *doomwaddir;
+    char waddirbuf[256];
     // Hashx86: there is no environment, so the IWAD and config live next to
-    // the executable (the process working directory).
-    doomwaddir = ".";
+    // the executable (the process working directory). Build an absolute path:
+    // the kernel's FAT layer resolves "/..." reliably, while "./name" does not.
+    if (getcwd(waddirbuf, sizeof(waddirbuf)) == NULL)
+        strcpy(waddirbuf, ".");
+    else {
+        size_t dirlen = strlen(waddirbuf);
+        while (dirlen > 0 && waddirbuf[dirlen - 1] == '/') waddirbuf[--dirlen] = '\0';
+    }
+    doomwaddir = waddirbuf;
 
     // Commercial.
     doom2wad = malloc(strlen(doomwaddir)+1+9+1);
@@ -607,7 +615,8 @@ void IdentifyVersion (void)
     doom2fwad = malloc(strlen(doomwaddir)+1+10+1);
     sprintf(doom2fwad, "%s/doom2f.wad", doomwaddir);
 
-    strcpy (basedefault, "default.cfg");
+    // Keep the config absolute as well, so M_SaveDefaults works from any cwd.
+    sprintf(basedefault, "%s/default.cfg", doomwaddir);
 #endif
 
     if (M_CheckParm ("-shdev"))

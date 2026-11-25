@@ -78,6 +78,10 @@ void    W_ReadLump (int lump, void *dest);
 void*	W_CacheLumpNum (int lump, int tag);
 void*	W_CacheLumpName (char* name, int tag);
 
+// Release a cached lump and clear its cache slot, so a later cache hit does
+// not return freed memory.
+void	W_FreeLump (int lump);
+
 
 
 

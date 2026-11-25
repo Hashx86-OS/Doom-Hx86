@@ -148,7 +148,7 @@ void P_LoadVertexes (int lump)
     }
 
     // Free buffer memory.
-    Z_Free (data);
+    W_FreeLump (lump);
 }
 
 
@@ -192,7 +192,7 @@ void P_LoadSegs (int lump)
 	    li->backsector = 0;
     }
 	
-    Z_Free (data);
+    W_FreeLump (lump);
 }
 
 
@@ -220,7 +220,7 @@ void P_LoadSubsectors (int lump)
 	ss->firstline = SHORT(ms->firstseg);
     }
 	
-    Z_Free (data);
+    W_FreeLump (lump);
 }
 
 
@@ -254,7 +254,7 @@ void P_LoadSectors (int lump)
 	ss->thinglist = NULL;
     }
 	
-    Z_Free (data);
+    W_FreeLump (lump);
 }
 
 
@@ -291,7 +291,7 @@ void P_LoadNodes (int lump)
 	}
     }
 	
-    Z_Free (data);
+    W_FreeLump (lump);
 }
 
 
@@ -346,7 +346,7 @@ void P_LoadThings (int lump)
 	P_SpawnMapThing (mt);
     }
 	
-    Z_Free (data);
+    W_FreeLump (lump);
 }
 
 
@@ -428,7 +428,7 @@ void P_LoadLineDefs (int lump)
 	    ld->backsector = 0;
     }
 	
-    Z_Free (data);
+    W_FreeLump (lump);
 }
 
 
@@ -443,10 +443,10 @@ void P_LoadSideDefs (int lump)
     side_t*		sd;
 	
     numsides = W_LumpLength (lump) / sizeof(mapsidedef_t);
-    sides = Z_Malloc (numsides*sizeof(side_t),PU_LEVEL,0);	
+    sides = Z_Malloc (numsides*sizeof(side_t),PU_LEVEL,0);
     memset (sides, 0, numsides*sizeof(side_t));
     data = W_CacheLumpNum (lump,PU_STATIC);
-	
+
     msd = (mapsidedef_t *)data;
     sd = sides;
     for (i=0 ; i<numsides ; i++, msd++, sd++)
@@ -459,7 +459,7 @@ void P_LoadSideDefs (int lump)
 	sd->sector = &sectors[SHORT(msd->sector)];
     }
 	
-    Z_Free (data);
+    W_FreeLump (lump);
 }
 
 

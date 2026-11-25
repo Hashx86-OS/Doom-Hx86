@@ -38,9 +38,9 @@ installs:
 ```
 
 The original DOOM v1.8 shareware WAD is downloaded as a gzip archive from the
-idgames mirror, verified against a pinned SHA-256, inflated, verified again, and
-written next to the executable. Hashx86 does not host or redistribute the game
-data.
+idgames mirror at `gamers.org` (the same bytes as the primary mirror), verified
+against a pinned SHA-256, inflated, verified again, and written next to the
+executable. Hashx86 does not host or redistribute the game data.
 
 Retail DOOM data is proprietary and must be supplied by the user from a legal
 installation. Place a commercial IWAD (`doom.wad` or `doom2.wad`) in the app

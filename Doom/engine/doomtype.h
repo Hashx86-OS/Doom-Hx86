@@ -27,9 +27,11 @@
 
 #ifndef __BYTEBOOL__
 #define __BYTEBOOL__
-// Fixed to use builtin bool type with C++.
+// Keep the original C enum's int-sized semantics. The engine uses values
+// other than 0/1 (animdefs terminates with -1, sprtemp marks entries with 2),
+// so a C++ bool would silently clamp them and break those loops.
 #ifdef __cplusplus
-typedef bool boolean;
+typedef int boolean;
 #else
 typedef enum {false, true} boolean;
 #endif

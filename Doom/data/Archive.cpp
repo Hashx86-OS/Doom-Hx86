@@ -41,8 +41,10 @@ namespace {
 
 // Official idgames mirror. doom-1.8.wad.gz is a plain gzip-compressed WAD,
 // unlike doom19s.zip, which is a split DEICE self-extracting installer.
+// This mirror serves the same bytes as ftp.fu-berlin.de and chains to a root
+// in Hashx86's compact trust store; fu-berlin's HARICA root is not in it.
 constexpr const char* kGzipUrl =
-    "https://ftp.fu-berlin.de/pc/games/idgames/idstuff/doom/doom-1.8.wad.gz";
+    "https://www.gamers.org/pub/idgames/idstuff/doom/doom-1.8.wad.gz";
 constexpr uint32_t kGzipSize = 1756050;
 constexpr const char* kGzipHash =
     "58cf6a563b631a47561630afa6276d853c27079342f7969ec3006965da8557a1";

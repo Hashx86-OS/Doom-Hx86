@@ -19,6 +19,7 @@ int write(int fd, const void *buf, int count);
 int lseek(int fd, int offset, int whence);
 int unlink(const char *pathname);
 int access(const char *pathname, int mode);
+char *getcwd(char *buf, size_t size);
 int usleep(unsigned int usec);
 
 #endif

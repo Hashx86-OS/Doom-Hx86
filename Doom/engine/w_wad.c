@@ -500,6 +500,26 @@ W_CacheLumpNum
 }
 
 
+//
+// W_FreeLump
+// Release a cached lump and clear its slot, so a later cache hit re-reads it
+// from the WAD instead of returning freed memory.
+//
+void
+W_FreeLump
+( int		lump )
+{
+    if ((unsigned)lump >= numlumps)
+	return;
+
+    if (lumpcache[lump])
+    {
+	Z_Free (lumpcache[lump]);
+	lumpcache[lump] = NULL;
+    }
+}
+
+
 
 //
 // W_CacheLumpName
