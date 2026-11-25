@@ -80,8 +80,12 @@ typedef enum
 // The integrated sound support is experimental,
 //  and unfinished. Default is synchronous.
 // Experimental asynchronous timer based is
-//  handled by SNDINTR. 
-#define SNDSERV  1
+//  handled by SNDINTR.
+//
+// Hashx86 has no separate sound server: i_sound.c runs the DMX mixer in
+// this process, so SNDSERV must stay undefined or d_main.c compiles the
+// I_UpdateSound() call out of the frame loop and the mixer never runs.
+//#define SNDSERV  1
 //#define SNDINTR  1
 
 
