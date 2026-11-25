@@ -5,9 +5,20 @@ Port of the original id Software DOOM engine (`linuxdoom-1.10`) to the
 
 ## Status
 
-Software renderer, keyboard + mouse input, and single-player. Sound is not
-implemented yet; the game runs silently. The app can download and install id
-Software's original DOOM shareware WAD on first launch.
+Software renderer, keyboard + mouse input, single-player, and 8-channel sound
+effects mixed at 22.05 kHz stereo through the Hashx86 audio stack. There is no
+music playback yet. The app can download and install id Software's original
+DOOM shareware WAD on first launch.
+
+## Audio
+
+DOOM's classic DMX mixer runs in the game process. Sound lumps from the WAD
+(8-bit unsigned mono, 11025 Hz) are pre-cached at start-up; the mixer converts
+them to 16-bit stereo at 22050 Hz and streams the result to the kernel through
+`Hsys_audioOpen/Write/GetPos/Close` (Hsys 11-14). The kernel's AudioMixer feeds
+the AC'97 driver, so the game needs no audio driver code of its own.
+
+Menu music and level music (MUS) are not implemented.
 
 ## Prerequisites
 
