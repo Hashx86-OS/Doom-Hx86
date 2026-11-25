@@ -149,7 +149,7 @@ extern "C" void _start(void* arg) {
         ShowMissingWadDialog(wadpath);
         if (!wad_file_exists(wadpath)) {
             printf("[DOOM] Game data is still missing, exiting\n");
-            syscall_exit(1);
+            syscall_exit_group(1);
         }
     }
 
@@ -158,5 +158,5 @@ extern "C" void _start(void* arg) {
 
     printf("[DOOM] Starting...\n");
     DoomMain(1, build_argv);
-    syscall_exit(0);
+    syscall_exit_group(0);
 }

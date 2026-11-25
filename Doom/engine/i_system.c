@@ -104,7 +104,10 @@ void I_Quit(void) {
     I_ShutdownMusic();
     M_SaveDefaults();
     I_ShutdownGraphics();
-    syscall_exit(0);
+    // Exit the whole process: the GUI event-handler thread created for the
+    // download dialog would otherwise keep the process (and its fullscreen
+    // screen lock) alive after this thread exits.
+    syscall_exit_group(0);
 }
 
 void I_BeginRead(void) {}
@@ -137,5 +140,5 @@ void I_Error(char* error, ...) {
     D_QuitNetGame();
     I_ShutdownGraphics();
 
-    syscall_exit(1);
+    syscall_exit_group(1);
 }
