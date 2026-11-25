@@ -374,7 +374,9 @@ static int StartChannel(int sfxid, int volume, int sep, int step) {
     if (sfxid <= 0 || sfxid >= NUMSFX) return -1;
     if (!S_sfx[sfxid].data || lengths[sfxid] <= 0) return -1;
     if (volume < 0) volume = 0;
-    if (volume > 127) volume = 127;
+    if (volume > 15) volume = 15;
+    // The game's SFX volume is 0-15; the DMX lookup expects 0-127.
+    volume *= 8;
     if (sep < 0) sep = 0;
     if (sep > 255) sep = 255;
 
@@ -484,7 +486,9 @@ void I_UpdateSoundParams(int handle, int vol, int sep, int pitch) {
     if (handle == 0) return;
 
     if (vol < 0) vol = 0;
-    if (vol > 127) vol = 127;
+    if (vol > 15) vol = 15;
+    // The game's SFX volume is 0-15; the DMX lookup expects 0-127.
+    vol *= 8;
     if (sep < 0) sep = 0;
     if (sep > 255) sep = 255;
 
