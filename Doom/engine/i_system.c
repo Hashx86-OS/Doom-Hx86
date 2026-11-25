@@ -49,31 +49,19 @@ byte* I_ZoneBase(int* size) {
 /* Timing                                                                     */
 /* ------------------------------------------------------------------------- */
 
-static unsigned int rdtsc_low(void) {
-    unsigned int lo;
-    __asm__ volatile("rdtsc" : "=a"(lo) : : "edx");
-    return lo;
-}
+// Kernel PIT-based millisecond clock (Hsys 15). Calibrating the TSC in user
+// space is unreliable: nanosleep used to return before the thread actually
+// blocked, so the measured interval collapsed and the game clock ran fast.
+// The kernel clock is independent of the CPU frequency.
+#define HX86_HSYS_GET_TIME_MS 15
 
-static unsigned int tsc_base;
-static unsigned int tsc_per_ms;
-static int timer_ready;
-
-static void I_CalibrateTimer(void) {
-    struct timespec req;
-    req.tv_sec = 0;
-    req.tv_nsec = 50 * 1000 * 1000;  // 50 ms
-
-    unsigned int start = rdtsc_low();
-    syscall_nanosleep(&req, NULL);
-    unsigned int end = rdtsc_low();
-
-    // The kernel may service the sleep slightly late; the ratio is still
-    // close enough for a game clock.
-    tsc_per_ms = (end - start) / 50;
-    if (tsc_per_ms == 0) tsc_per_ms = 1;
-    tsc_base = start;
-    timer_ready = 1;
+static int32_t HxTimeMs(void) {
+    int32_t result = 0;
+    __asm__ __volatile__("int $0x80"
+                         : "=a"(result)
+                         : "a"(sys_Hcall), "b"(HX86_HSYS_GET_TIME_MS)
+                         : "memory");
+    return result;
 }
 
 //
@@ -81,13 +69,9 @@ static void I_CalibrateTimer(void) {
 // returns time in 1/35th second tics (TICRATE).
 //
 int I_GetTime(void) {
-    if (!timer_ready) I_CalibrateTimer();
-
-    unsigned int delta = rdtsc_low() - tsc_base;
-    unsigned int msec = delta / tsc_per_ms;
-
-    // Avoid overflowing msec * TICRATE on long sessions.
-    return (int)((msec / 1000) * TICRATE + ((msec % 1000) * TICRATE) / 1000);
+    int32_t msec = HxTimeMs();
+    if (msec < 0) msec = 0;
+    return (int)(((uint64_t)(uint32_t)msec * TICRATE) / 1000u);
 }
 
 /* ------------------------------------------------------------------------- */
